@@ -28,14 +28,17 @@ for inst in w0 w1 w2 w3 wtp2; do
     fi
 done
 
-echo "=== [4/5] Injecting Public DNS into template ==="
-if [ -f docker-compose.yml ]; then
-    # 移除之前可能错加的 host 模式，改为强行注入公共 DNS
-    sed -i '/network_mode: "host"/d' docker-compose.yml
-    sed -i '/image: ghcr.io\/tensorcash/a \    dns:\n      - 8.8.8.8\n      - 1.1.1.1' docker-compose.yml
-fi
-
-echo "=== [5/5] Launching official run.sh with DNS fix ==="
+echo "=== [4/5] Pulling Docker images and initializing environment ==="
 ./run.sh
 
-echo "=== 🎉 Deployment completed successfully! ==="
+echo "=== [5/5] Performing secondary check to ensure successful launch ==="
+for inst in w0 w1 w2 w3 wtp2; do
+    if [ -d "$inst/vllm_supervisor.py" ]; then
+        rm -rf "$inst/vllm_supervisor.py"
+        [ -f vllm_supervisor.py ] && cp -f vllm_supervisor.py "$inst/"
+    fi
+done
+
+./run.sh
+
+echo "=== 🎉 Deployment completed successfully! Miner is running in the background ==="
