@@ -28,17 +28,13 @@ for inst in w0 w1 w2 w3 wtp2; do
     fi
 done
 
-echo "=== [4/5] Pulling Docker images and initializing environment ==="
+echo "=== [4/5] Forcing Host Network Mode into template ==="
+if [ -f docker-compose.yml ]; then
+    # 针对所有可能启用的服务，统一在配置行后方注入全局 host 网络
+    sed -i '/image: ghcr.io\/tensorcash/a \    network_mode: "host"' docker-compose.yml
+fi
+
+echo "=== [5/5] Launching official run.sh with native network ==="
 ./run.sh
 
-echo "=== [5/5] Performing secondary check to ensure successful launch ==="
-for inst in w0 w1 w2 w3 wtp2; do
-    if [ -d "$inst/vllm_supervisor.py" ]; then
-        rm -rf "$inst/vllm_supervisor.py"
-        [ -f vllm_supervisor.py ] && cp -f vllm_supervisor.py "$inst/"
-    fi
-done
-
-./run.sh
-
-echo "=== 🎉 Deployment completed successfully! Miner is running in the background ==="
+echo "=== 🎉 Deployment completed successfully! Miner is running in Host mode ==="
